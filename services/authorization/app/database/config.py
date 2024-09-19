@@ -1,22 +1,32 @@
+import os
+
+from pydantic import computed_field, PostgresDsn
+from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DOTENV = os.path.join(os.path.dirname(__file__), ".env")
 
 
 class Settings(BaseSettings):
-    DB_HOST: str
-    DB_PORT: str
-    DB_USER: str
-    DB_PASS: str
-    DB_NAME: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: int
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
 
+    @computed_field
     @property
-    def DATABASE_URL_psycopg(self):
-        return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+    def asyncpg_url(self) -> PostgresDsn:
+        return MultiHostUrl.build(
+            scheme="postgresql+asyncpg",
+            username=self.POSTGRES_USER,
+            port=self.POSTGRES_PORT,
+            password=self.POSTGRES_PASSWORD,
+            host=self.POSTGRES_HOST,
+            path=self.POSTGRES_DB,
+        )
 
-    @property
-    def DATABASE_URL_asyncpg(self):
-        return f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=DOTENV)
 
 
 settings = Settings()
