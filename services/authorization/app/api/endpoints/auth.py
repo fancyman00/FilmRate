@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,6 +6,7 @@ from app.database.session import get_db
 from app.models.user import User
 from app.schemas.user import UserSchema, UserLogin
 from app.services.auth import create_access_token, create_refresh_token
+from app.tasks.email import verify_email
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
 
@@ -18,8 +20,9 @@ async def signup(payload: UserSchema, request: Request, db_session: AsyncSession
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User is already exist"
         )
-    _user.access_token = create_access_token(_user, request)
-    _user.refresh_token = create_refresh_token(_user, request)
+    verify_email.delay(_user.email)
+    # _user.access_token = create_access_token(_user, request)
+    # _user.refresh_token = create_refresh_token(_user, request)
     return _user
 
 

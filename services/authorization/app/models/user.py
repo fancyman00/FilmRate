@@ -4,12 +4,12 @@ from typing import Any
 import bcrypt
 from passlib.context import CryptContext
 from pydantic import SecretStr
-from sqlalchemy import String, LargeBinary, select
+from sqlalchemy import String, LargeBinary, select, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import mapped_column, Mapped
 
-from app.models.base import Base
+from app.database.model import Base
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -20,7 +20,7 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     _password: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-
+    confirm: Mapped[bool] = mapped_column(Boolean, default=False)
     @property
     def password(self):
         return self._password.decode("utf-8")
